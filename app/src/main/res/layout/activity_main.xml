@@ -9,7 +9,7 @@
         android:id="@+id/etAddress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="آدرس بیت‌کوین خود را وارد کنید"
+        android:hint="آدرس بیت‌کوین را وارد کنید"
         android:textSize="12sp"
         android:inputType="text" />
 
@@ -17,14 +17,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="16dp">
 
         <Button
             android:id="@+id/btnStart"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="شروع تست" />
+            android:text="شروع (پس‌زمینه)" />
 
         <Button
             android:id="@+id/btnStop"
@@ -36,33 +36,12 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="وضعیت: آماده"
+        android:text="⚠️ برنامه در پس‌زمینه اجرا می‌شود.\nوضعیت را در Notification Bar ببینید."
         android:textSize="14sp"
-        android:layout_marginTop="8dp"
-        android:textStyle="bold" />
+        android:layout_marginTop="24dp"
+        android:textStyle="bold"
+        android:textColor="#FF5722" />
 
-    <TextView
-        android:id="@+id/tvStats"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="آمار: -"
-        android:textSize="12sp"
-        android:layout_marginTop="4dp" />
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="8dp">
-
-        <TextView
-            android:id="@+id/tvLog"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="10sp"
-            android:fontFamily="monospace" />
-    </ScrollView>
 </LinearLayout>
