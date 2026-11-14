@@ -6,11 +6,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.DeterministicKeyChain;
+import org.bitcoinj.crypto.DeterministicSeed;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.wallet.KeyPurpose;
+
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -87,20 +92,34 @@ public class MainActivity extends AppCompatActivity {
                 while (running && !isCancelled()) {
                     attempts++;
 
+                    // 1. تولید 128 بیت entropy تصادفی (معادل 12 کلمه)
                     byte[] entropy = new byte[16];
                     random.nextBytes(entropy);
 
+                    // 2. تبدیل به عبارت بازیابی (12 کلمه)
                     List<String> words = MnemonicCode.INSTANCE.toMnemonic(entropy);
-                    byte[] seed = MnemonicCode.toSeed(words, "");
-                    ECKey key = ECKey.fromPrivate(seed);
+                    
+                    // 3. تبدیل کلمات به Seed (64 بایت)
+                    byte[] seedBytes = MnemonicCode.toSeed(words, "");
+
+                    // 4. ساخت زنجیره کلید استاندارد (BIP32/BIP44) - روش صحیح کیف پول‌ها
+                    DeterministicSeed detSeed = new DeterministicSeed(seedBytes, "", "", 0);
+                    DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(detSeed).build();
+                    
+                    // 5. دریافت اولین کلید دریافت (آدرس اول کیف پول)
+                    ECKey key = chain.getKey(KeyPurpose.RECEIVE_FUNDS);
+                    
+                    // 6. تولید آدرس بیت‌کوین از کلید
                     String generatedAddress = LegacyAddress.fromKey(params, key).toString();
 
+                    // 7. بررسی تطابق
                     if (generatedAddress.equals(targetAddress)) {
                         String seedPhrase = String.join(" ", words);
                         return "✅ پیدا شد!\n\nعبارت بازیابی:\n" + seedPhrase + 
                                "\n\nآدرس: " + generatedAddress;
                     }
 
+                    // نمایش پیشرفت هر 100 تست
                     if (attempts % 100 == 0) {
                         long elapsed = System.currentTimeMillis() - startTime;
                         double speed = attempts / (elapsed / 1000.0);
@@ -108,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
                         String progress = String.format("تست: %,d | سرعت: %.1f/ثانیه", attempts, speed);
                         publishProgress(progress);
 
+                        // نمایش آدرس‌های تست شده
                         if (attempts % 500 == 0) {
                             logBuilder.insert(0, String.format("#%,d: %s\n", attempts, generatedAddress));
                             if (logBuilder.length() > 3000) {
