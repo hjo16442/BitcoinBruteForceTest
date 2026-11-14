@@ -25,11 +25,13 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText etAddress;
     private Button btnStart, btnStop;
-    private TextView tvStatus, tvStats;
+    private TextView tvStatus, tvStats, tvLog;
     private Thread[] workerThreads;
     private AtomicBoolean running = new AtomicBoolean(false);
     private AtomicLong totalAttempts = new AtomicLong(0);
     private String targetAddress;
+    private StringBuffer logBuffer = new StringBuffer();
+    private Object logLock = new Object();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +43,7 @@ public class MainActivity extends AppCompatActivity {
         btnStop = findViewById(R.id.btnStop);
         tvStatus = findViewById(R.id.tvStatus);
         tvStats = findViewById(R.id.tvStats);
-
-        findViewById(R.id.tvLog).setVisibility(android.view.View.GONE);
+        tvLog = findViewById(R.id.tvLog);
 
         btnStart.setOnClickListener(v -> {
             targetAddress = etAddress.getText().toString().trim();
@@ -61,23 +62,24 @@ public class MainActivity extends AppCompatActivity {
         
         running.set(true);
         totalAttempts.set(0);
+        logBuffer.setLength(0);
+        tvLog.setText("");
         tvStatus.setText("در حال اجرا با حداکثر سرعت (Multi-Thread)...");
         btnStart.setEnabled(false);
         btnStop.setEnabled(true);
 
-        // استفاده از تمام هسته‌های CPU
         int numCores = Runtime.getRuntime().availableProcessors();
         workerThreads = new Thread[numCores];
 
         long startTime = SystemClock.elapsedRealtime();
 
         for (int i = 0; i < numCores; i++) {
-            workerThreads[i] = new Thread(new WorkerRunnable(i));
+            workerThreads[i] = new Thread(new WorkerRunnable(i, startTime));
             workerThreads[i].setPriority(Thread.MAX_PRIORITY);
             workerThreads[i].start();
         }
 
-        // Thread برای به‌روزرسانی UI
+        // Thread برای به‌روزرسانی UI هر ثانیه
         new Thread(() -> {
             while (running.get()) {
                 try {
@@ -114,31 +116,28 @@ public class MainActivity extends AppCompatActivity {
         private final int threadId;
         private final SecureRandom random = new SecureRandom();
         private final NetworkParameters params = MainNetParams.get();
+        private final long startTime;
+        private int localCounter = 0;
+        private StringBuilder localLog = new StringBuilder();
 
-        WorkerRunnable(int id) {
+        WorkerRunnable(int id, long startTime) {
             this.threadId = id;
+            this.startTime = startTime;
         }
 
         @Override
         public void run() {
             try {
                 while (running.get() && !Thread.currentThread().isInterrupted()) {
-                    // تولید entropy
                     byte[] entropy = new byte[16];
                     random.nextBytes(entropy);
 
-                    // تبدیل به کلمات
                     List<String> words = MnemonicCode.INSTANCE.toMnemonic(entropy);
-                    
-                    // ساخت Seed و زنجیره کلید
                     DeterministicSeed detSeed = new DeterministicSeed(entropy, words, 0L);
                     DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(detSeed).build();
-                    
-                    // دریافت آدرس
                     ECKey key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
                     String generatedAddress = LegacyAddress.fromKey(params, key).toString();
 
-                    // بررسی تطابق
                     if (generatedAddress.equals(targetAddress)) {
                         running.set(false);
                         runOnUiThread(() -> {
@@ -150,11 +149,25 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // افزایش شمارنده
                     totalAttempts.incrementAndGet();
+                    localCounter++;
+
+                    // هر 100 تست، آدرس‌ها را به log محلی اضافه کن
+                    if (localCounter % 100 == 0) {
+                        localLog.insert(0, String.format("#%,d: %s\n", totalAttempts.get(), generatedAddress));
+                        if (localLog.length() > 2000) {
+                            localLog.setLength(2000);
+                        }
+                        
+                        // هر 500 تست، log را به UI اصلی بفرست
+                        if (localCounter % 500 == 0) {
+                            final String logText = localLog.toString();
+                            runOnUiThread(() -> tvLog.setText(logText));
+                        }
+                    }
                 }
             } catch (Exception e) {
-                // خطا را نادیده بگیر و ادامه بده
+                // نادیده گرفتن خطا
             }
         }
     }
