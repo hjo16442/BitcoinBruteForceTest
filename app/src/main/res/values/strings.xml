@@ -1,9 +1,0 @@
-<resources>
-    <string name="app_name">Bitcoin Brute Force Test</string>
-    <string name="safety_notice">نسخه آموزشی مستقل: فقط شبیه‌سازی محلی با داده‌های ساختگی. این برنامه کلید خصوصی یا آدرس واقعی بیت‌کوین تولید یا جست‌وجو نمی‌کند و به کیف‌پول‌ها متصل نمی‌شود.</string>
-    <string name="status_ready">وضعیت: آماده</string>
-    <string name="status_completed">وضعیت: آزمایش شماره %1$d انجام شد</string>
-    <string name="start_test">شروع آزمایش شبیه‌سازی</string>
-    <string name="clear_results">پاک‌کردن نتایج</string>
-    <string name="results_title">نتایج آزمایش‌ها</string>
-</resources>
