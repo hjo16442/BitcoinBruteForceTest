@@ -3,9 +3,11 @@ package com.example.bruteforcetest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -30,7 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BruteForceService extends Service {
 
     private static final String CHANNEL_ID = "BruteForceChannel";
+    private static final String FOUND_CHANNEL_ID = "FoundChannel";
     private static final int NOTIFICATION_ID = 1;
+    private static final int FOUND_NOTIFICATION_ID = 999;
 
     private PowerManager.WakeLock wakeLock;
     private Thread[] workerThreads;
@@ -56,7 +60,6 @@ public class BruteForceService extends Service {
             return START_NOT_STICKY;
         }
 
-        // گرفتن WakeLock برای جلوگیری از خاموش شدن CPU
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
@@ -64,11 +67,9 @@ public class BruteForceService extends Service {
         );
         wakeLock.acquire();
 
-        // ساخت Notification
         Notification notification = buildNotification();
         startForeground(NOTIFICATION_ID, notification);
 
-        // شروع اجرای Multi-Thread
         startBruteForce();
 
         return START_STICKY;
@@ -88,7 +89,6 @@ public class BruteForceService extends Service {
             workerThreads[i].start();
         }
 
-        // Thread برای به‌روزرسانی Notification
         new Thread(() -> {
             NotificationManager notificationManager = 
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -133,9 +133,52 @@ public class BruteForceService extends Service {
                 NotificationManager.IMPORTANCE_LOW
             );
             channel.setDescription("نمایش وضعیت BruteForce");
+            
+            NotificationChannel foundChannel = new NotificationChannel(
+                FOUND_CHANNEL_ID,
+                "پیدا شد!",
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            foundChannel.setDescription("وقتی آدرس پیدا شد");
+            foundChannel.enableVibration(true);
+            foundChannel.setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI, null);
+            
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(channel);
+            manager.createNotificationChannel(foundChannel);
         }
+    }
+
+    private void showFoundNotification(String seedPhrase, String address) {
+        SharedPreferences prefs = getSharedPreferences("BruteForceResult", MODE_PRIVATE);
+        prefs.edit()
+            .putString("seed_phrase", seedPhrase)
+            .putString("address", address)
+            .apply();
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("FOUND", true);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            this, 0, intent, 
+            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        Notification notification = new NotificationCompat.Builder(this, FOUND_CHANNEL_ID)
+            .setContentTitle("✅ آدرس پیدا شد!")
+            .setContentText("کلیک کنید تا عبارت بازیابی را ببینید")
+            .setStyle(new NotificationCompat.BigTextStyle()
+                .bigText("عبارت بازیابی:\n" + seedPhrase + "\n\nآدرس: " + address))
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setVibrate(new long[]{0, 500, 200, 500})
+            .build();
+
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.notify(FOUND_NOTIFICATION_ID, notification);
     }
 
     @Override
@@ -179,7 +222,9 @@ public class BruteForceService extends Service {
 
                     if (generatedAddress.equals(targetAddress)) {
                         running.set(false);
-                        // اگر پیدا شد، می‌توانید اینجا Notification نشان دهید
+                        String seedPhrase = String.join(" ", words);
+                        showFoundNotification(seedPhrase, generatedAddress);
+                        stopSelf();
                         return;
                     }
 
