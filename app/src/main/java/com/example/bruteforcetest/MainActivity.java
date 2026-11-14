@@ -14,7 +14,7 @@ import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
-import org.bitcoinj.wallet.KeyPurpose;
+import org.bitcoinj.wallet.KeyChain;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -92,22 +92,22 @@ public class MainActivity extends AppCompatActivity {
                 while (running && !isCancelled()) {
                     attempts++;
 
-                    // 1. تولید 128 بیت entropy تصادفی (معادل 12 کلمه)
+                    // 1. تولید 128 بیت entropy تصادفی
                     byte[] entropy = new byte[16];
                     random.nextBytes(entropy);
 
                     // 2. تبدیل به عبارت بازیابی (12 کلمه)
                     List<String> words = MnemonicCode.INSTANCE.toMnemonic(entropy);
                     
-                    // 3. ساخت Seed استاندارد از روی کلمات (روش صحیح در bitcoinj 0.16)
-                    long creationTimeSeconds = 0;
-                    DeterministicSeed detSeed = new DeterministicSeed(words, "", creationTimeSeconds);
+                    // 3. ساخت Seed استاندارد (اصلاح شده برای bitcoinj 0.16.2)
+                    long creationTimeSeconds = 0L;
+                    DeterministicSeed detSeed = new DeterministicSeed(entropy, words, creationTimeSeconds);
                     
                     // 4. ساخت زنجیره کلید استاندارد (BIP32/BIP44)
                     DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(detSeed).build();
                     
-                    // 5. دریافت اولین کلید دریافت (آدرس اول کیف پول)
-                    ECKey key = chain.getKey(KeyPurpose.RECEIVE_FUNDS);
+                    // 5. دریافت اولین کلید دریافت (استفاده از نام کامل کلاس برای جلوگیری از خطای ایمپورت)
+                    ECKey key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
                     
                     // 6. تولید آدرس بیت‌کوین از کلید
                     String generatedAddress = LegacyAddress.fromKey(params, key).toString();
