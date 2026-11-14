@@ -1,0 +1,2 @@
+rootProject.name = "BitcoinBruteForceTest"
+include ':app'
