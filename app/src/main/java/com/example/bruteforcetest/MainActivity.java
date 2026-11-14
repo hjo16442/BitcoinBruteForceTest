@@ -10,10 +10,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.crypto.DeterministicKeyChain;
-import org.bitcoinj.crypto.DeterministicSeed;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.wallet.DeterministicKeyChain;
+import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyPurpose;
 
 import java.security.SecureRandom;
@@ -99,11 +99,11 @@ public class MainActivity extends AppCompatActivity {
                     // 2. تبدیل به عبارت بازیابی (12 کلمه)
                     List<String> words = MnemonicCode.INSTANCE.toMnemonic(entropy);
                     
-                    // 3. تبدیل کلمات به Seed (64 بایت)
-                    byte[] seedBytes = MnemonicCode.toSeed(words, "");
-
-                    // 4. ساخت زنجیره کلید استاندارد (BIP32/BIP44) - روش صحیح کیف پول‌ها
-                    DeterministicSeed detSeed = new DeterministicSeed(seedBytes, "", "", 0);
+                    // 3. ساخت Seed استاندارد از روی کلمات (روش صحیح در bitcoinj 0.16)
+                    long creationTimeSeconds = 0;
+                    DeterministicSeed detSeed = new DeterministicSeed(words, "", creationTimeSeconds);
+                    
+                    // 4. ساخت زنجیره کلید استاندارد (BIP32/BIP44)
                     DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(detSeed).build();
                     
                     // 5. دریافت اولین کلید دریافت (آدرس اول کیف پول)
