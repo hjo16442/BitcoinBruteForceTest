@@ -13,11 +13,12 @@
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
 
+    <!-- دقت کنید: ID اینجا دقیقاً etAddresses است -->
     <EditText
         android:id="@+id/etAddresses"
         android:layout_width="match_parent"
         android:layout_height="150dp"
-        android:hint="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+        android:hint="آدرس خود را اینجا وارد کنید"
         android:textSize="12sp"
         android:inputType="textMultiLine"
         android:gravity="top" />
