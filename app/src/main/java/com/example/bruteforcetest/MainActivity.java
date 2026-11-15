@@ -15,7 +15,8 @@ import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EditText etAddress;
+    // نام متغیر باید دقیقاً با XML یکی باشد: etAddresses
+    private EditText etAddresses;
     private Button btnStart, btnStop;
     private TextView tvResult;
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -25,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        etAddress = findViewById(R.id.etAddress);
+        // اینجا هم باید R.id.etAddresses باشد
+        etAddresses = findViewById(R.id.etAddresses);
         btnStart = findViewById(R.id.btnStart);
         btnStop = findViewById(R.id.btnStop);
         tvResult = findViewById(R.id.tvResult);
@@ -44,11 +46,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnStart.setOnClickListener(v -> {
-            String target = etAddress.getText().toString().trim();
-            if (target.isEmpty()) {
+            String addresses = etAddresses.getText().toString().trim();
+            if (addresses.isEmpty()) {
                 return;
             }
-            startBruteForceService(target);
+            startBruteForceService(addresses);
         });
 
         btnStop.setOnClickListener(v -> stopBruteForceService());
@@ -75,9 +77,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startBruteForceService(String targetAddress) {
+    private void startBruteForceService(String addresses) {
         Intent serviceIntent = new Intent(this, BruteForceService.class);
-        serviceIntent.putExtra("TARGET_ADDRESS", targetAddress);
+        serviceIntent.putExtra("TARGET_ADDRESSES", addresses);
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent);
