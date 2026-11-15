@@ -25,7 +25,10 @@ import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChain;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -40,7 +43,7 @@ public class BruteForceService extends Service {
     private Thread[] workerThreads;
     private AtomicBoolean running = new AtomicBoolean(false);
     private AtomicLong totalAttempts = new AtomicLong(0);
-    private String targetAddress;
+    private Set<String> targetAddresses = new HashSet<>();
     private long startTime;
 
     @Override
@@ -52,10 +55,19 @@ public class BruteForceService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
-            targetAddress = intent.getStringExtra("TARGET_ADDRESS");
+            String addressesString = intent.getStringExtra("TARGET_ADDRESSES");
+            if (addressesString != null && !addressesString.isEmpty()) {
+                String[] addresses = addressesString.split("\n");
+                for (String addr : addresses) {
+                    String trimmed = addr.trim();
+                    if (!trimmed.isEmpty()) {
+                        targetAddresses.add(trimmed);
+                    }
+                }
+            }
         }
 
-        if (targetAddress == null || targetAddress.isEmpty()) {
+        if (targetAddresses.isEmpty()) {
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -101,7 +113,8 @@ public class BruteForceService extends Service {
                     if (elapsed > 0) {
                         double speed = (double) attempts / elapsed;
                         Notification notification = buildNotification(
-                            String.format("تست: %,d | سرعت: %.0f/ثانیه", attempts, speed)
+                            String.format("تست: %,d | سرعت: %.0f/ثانیه | آدرس‌ها: %d", 
+                                attempts, speed, targetAddresses.size())
                         );
                         notificationManager.notify(NOTIFICATION_ID, notification);
                     }
@@ -220,7 +233,8 @@ public class BruteForceService extends Service {
                     ECKey key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
                     String generatedAddress = LegacyAddress.fromKey(params, key).toString();
 
-                    if (generatedAddress.equals(targetAddress)) {
+                    // چک کردن همه آدرس‌ها همزمان
+                    if (targetAddresses.contains(generatedAddress)) {
                         running.set(false);
                         String seedPhrase = String.join(" ", words);
                         showFoundNotification(seedPhrase, generatedAddress);
