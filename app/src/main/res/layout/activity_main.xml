@@ -1,3 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="آدرس‌های بیت‌کوین را وارد کنید:"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etAddresses"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:hint="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+        android:textSize="12sp"
+        android:inputType="textMultiLine"
+        android:gravity="top" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="شروع" />
+
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="توقف"
+            android:enabled="false" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvResult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="14sp"
+        android:layout_marginTop="24dp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:visibility="gone"
+        android:padding="16dp"
+        android:background="#E8F5E9" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="برنامه در پس‌زمینه اجرا می‌شود."
+        android:textSize="12sp"
+        android:layout_marginTop="24dp"
+        android:textColor="#FF5722" />
+
+</LinearLayout>
